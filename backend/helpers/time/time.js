@@ -1,5 +1,5 @@
 
-
+const pad = (num) => (num < 10 ? "0" + num : num);
 
 exports.getTimestamp = () => {
     let date = new Date();

@@ -22,13 +22,13 @@ exports.createUser = async (req, res) => {
         await user.save();
 
         const ledgerEntry = new ledgerEntryModel({
-            userId:user._id,
-            transactionId:null,
-            entryType:"credit",
-            amount:0,
-            balanceAfter:0,
-            description:"User creation initialization ledger",
-            timeStamp:getTimestamp()
+            userId: user._id,
+            transactionId: null,
+            entryType: "credit",
+            amount: 0,
+            balanceAfter: 0,
+            description: "User creation initialization ledger",
+            timeStamp: getTimestamp()
         })
 
         await ledgerEntry.save();
@@ -48,6 +48,17 @@ exports.createUser = async (req, res) => {
 
     } catch (error) {
         console.error("Error creating user:", error);
+        return res.status(500).json({ message: "Error:" + error.errorResponse.errmsg });
+    }
+}
+
+exports.getUsers = async (req, res) => {
+    try {
+        // console.log("Called")
+        const users = await userModel.find({});
+        return res.status(200).json({message:"Available users",users})
+    } catch (error) {
+        console.error("Error fetching users:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
