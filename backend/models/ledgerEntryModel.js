@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 
-const withdrawalSchema = new Schema({
+const ledgerEntrySchema = new Schema({
     transactionId: {
         type: Schema.Types.ObjectId,
         ref: "transaction"
@@ -12,12 +12,17 @@ const withdrawalSchema = new Schema({
     amount: {
         type: Number
     },
-    status: {
+    balanceAfter: {
+        type: Number
+    },
+    entryType: {
         type: String,
-        enum: ['pending', 'failed', 'allocated', "declined"],
-        default: 'pending',
+        enum: ['credit', 'debit'],
+    },
+    description:{
+        type:String
     },
     timeStamp: Number,
 })
 
-exports.withdrawalModel = model('withdrawal', withdrawalSchema);
+exports.ledgerEntryModel = model('ledgerEntry', ledgerEntrySchema);
