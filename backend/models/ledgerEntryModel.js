@@ -5,6 +5,10 @@ const ledgerEntrySchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "transaction"
     },
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "user"
+    },
     accountId: {
         type: Schema.Types.ObjectId,
         ref: "account"
@@ -19,8 +23,8 @@ const ledgerEntrySchema = new Schema({
         type: String,
         enum: ['credit', 'debit'],
     },
-    description:{
-        type:String
+    description: {
+        type: String
     },
     timeStamp: Number,
 })
