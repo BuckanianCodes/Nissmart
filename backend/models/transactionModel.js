@@ -4,11 +4,15 @@ const transactionSchema = new Schema({
     amount: {
         type: Number
     },
-    userInitiated: {
+    fromAccount: {
         type: Schema.Types.ObjectId,
-        ref: "user"
+        ref: "account",
     },
-    account: {
+    toAccount: {
+        type: Schema.Types.ObjectId,
+        ref: "account",
+    },
+    accountId: {
         type: Schema.Types.ObjectId,
         ref: "account"
     },

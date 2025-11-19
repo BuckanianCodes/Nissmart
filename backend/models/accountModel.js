@@ -15,8 +15,18 @@ const accountSchema = new Schema({
     accountStatus: {
         type: String,
         enum: ['disabled', 'available'],
+        default: "available"
     },
     timeStamp: Number,
-})
+    updatedAt: {
+        type: Date,
+        default: () => new Date(),
+    },
+});
+
+accountSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  next();
+});
 
 exports.accountModel = model('account', accountSchema);
