@@ -1,6 +1,8 @@
 const { getTimestamp } = require("../helpers/time/time");
+const { accountModel } = require("../models/accountModel");
 const { auditLogModel } = require("../models/auditLogModel");
 const { ledgerEntryModel } = require("../models/ledgerEntryModel");
+const { transactionModel } = require("../models/transactionModel");
 const { userModel } = require("../models/UserModel");
 
 
@@ -56,9 +58,76 @@ exports.getUsers = async (req, res) => {
     try {
         // console.log("Called")
         const users = await userModel.find({});
-        return res.status(200).json({message:"Available users",users})
+        return res.status(200).json({ message: "Available users", users })
     } catch (error) {
         console.error("Error fetching users:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+exports.viewUserBalance = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+
+        const user = await userModel.findById(user_id);
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        //check user account exists
+        const account = await accountModel.findOne({ userId: user_id });
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+        //Return balance
+        return res.status(200).json({
+            user: user.email,
+            accountId: acc
+        })
+    } catch (error) {
+        console.error("BALANCE ERROR:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+exports.getUserTransactions = async (req, res) => {
+
+    try {
+
+
+        const { user_id } = req.params;
+
+        // 1. Check if user exists
+        const user = await userModel.findById(user_id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        //get user's account
+        const account = await accountModel.findOne({ userId: user_id });
+        if (!account) {
+            return res.status(404).json({ message: "Account not found" });
+        }
+
+        const accountId = account._id;
+
+        const transactions = await transactionModel.find({
+            $or: [
+                { fromAccount: accountId },
+                { toAccount: accountId },
+                { accountId: accountId }
+            ]
+        })
+            .sort({ timeStamp: -1 });
+
+        return res.status(200).json({
+            user: user.username || user.email,
+            accountId,
+            total: transactions.length,
+            transactions
+        });
+
+    } catch (error) {
+        console.error("TRANSACTION HISTORY ERROR:", error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
