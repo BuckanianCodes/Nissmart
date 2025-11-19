@@ -1,13 +1,10 @@
-const { transferFunds } = require("../controllers/transferController");
-const { transferRouter } = require("./transferRouter");
+const { transactionRouter } = require("./transactionRouter");
 const { userRouter } = require("./UserRouter");
-const { withdrawRouter } = require("./withdrawalRouter");
 
 const indexRouter = require("express").Router();
 
 indexRouter.use("/user",userRouter);
-withdrawRouter.use("/account",withdrawRouter);
-transferRouter.use("/funds",transferFunds)
+transactionRouter.use("/transactions",transactionRouter)
 
 
 exports.indexRouter = indexRouter;
