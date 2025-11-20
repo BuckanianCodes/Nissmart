@@ -23,6 +23,15 @@ exports.createUser = async (req, res) => {
 
         await user.save();
 
+        const account = new accountModel({
+            userId: user._id,
+            balance: 0,
+            timeStamp: getTimestamp()
+        });
+
+        await account.save();
+
+
         const ledgerEntry = new ledgerEntryModel({
             userId: user._id,
             transactionId: null,
@@ -34,6 +43,7 @@ exports.createUser = async (req, res) => {
         })
 
         await ledgerEntry.save();
+
         const auditLog = new auditLogModel({
             actorId: user._id,
             action: "CREATE_USER",
@@ -49,8 +59,16 @@ exports.createUser = async (req, res) => {
 
 
     } catch (error) {
-        console.error("Error creating user:", error);
-        return res.status(500).json({ message: "Error:" + error.errorResponse.errmsg });
+        if (error.code === 11000) {
+            return res.status(400).json({
+                message: "User with this email already exists"
+            });
+        }
+        // console.error("Error creating user:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            error: error.message
+        });
     }
 }
 
@@ -82,7 +100,7 @@ exports.viewUserBalance = async (req, res) => {
         //Return balance
         return res.status(200).json({
             user: user.email,
-            accountId: acc
+            account: account
         })
     } catch (error) {
         console.error("BALANCE ERROR:", error);

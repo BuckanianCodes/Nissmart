@@ -1,0 +1,21 @@
+.box {
+    background: #fafafa;
+    border: 2px solid #999;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    box-shadow: 0 5px 14px 0 rgba(255, 255, 255, 0.2);
+    padding: 10px 15px;
+}
+
+.create-user-btn {
+    background-image: linear-gradient(to right, #22c55e, #f59e0b);
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+form{
+    box-shadow: 5px 5px 0 #f59e0b;
+}

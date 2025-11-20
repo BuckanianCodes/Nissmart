@@ -1,0 +1,36 @@
+<div *ngIf="loading" class="flex justify-center mt-8">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div *ngIf="!loading && dataSource.data.length" class="py-12 px-16">
+   <button 
+ (click)="back()"
+ class="absolute top-0 left-0 mt-6 ml-16 border w-12 rounded-full text-3xl font-bold h-12"><</button>
+
+    <h1 class="text-xl font-semibold uppercase border-b-4 w-max text-center tracking-wider">Audits</h1>
+
+  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 w-full">
+
+    <ng-container matColumnDef="_id">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+      <td mat-cell *matCellDef="let element">{{ element._id }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="action">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Action</th>
+      <td mat-cell *matCellDef="let element">{{ element.action }}</td>
+    </ng-container>
+
+
+    <ng-container matColumnDef="timeStamp">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>TimeStamp</th>
+      <td mat-cell *matCellDef="let element">{{ element.timeStamp }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+  </table>
+
+  <mat-paginator [pageSize]="5" showFirstLastButtons></mat-paginator>
+</div>

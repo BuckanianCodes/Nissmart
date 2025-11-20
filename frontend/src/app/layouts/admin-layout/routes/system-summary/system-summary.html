@@ -1,0 +1,57 @@
+<section 
+*ngIf="!loading"
+class="mt-[30px] flex  items-center justify-center gap-12 flex-wrap">
+  <button 
+  routerLink="/"
+  class="absolute top-0 font-semibold left-0 mt-6 ml-12 border py-1 px-2 rounded">
+    <span><</span>
+    Go to Client
+  </button>  
+<button 
+   routerLink="/admin/logs"
+   class="absolute top-0 mt-6 mr-6 right-0 view-btn">View recent activities</button>
+    <div
+     class="user-card card"  >
+        <h1 class="label">
+            Total Users
+        </h1>
+        <p class="value">
+            {{totalUsers}}
+        </p>
+    </div>
+        <div class="a-card card"  >
+        <h1 class="label">
+            Total Amount
+        </h1>
+        <p class="value">
+            {{totalAmount}}
+        </p>
+    </div>
+       <div class="w-card card"  >
+        <h1 class="label">
+            Total Withdrawals
+        </h1>
+        <p class="value">
+            {{totalWithdrawals}}
+        </p>
+    </div>
+
+       <div 
+       class="t-card card"  
+       routerLink="/admin/transactions">
+        <h1 class="label">
+            Total Transactions
+        </h1>
+        <p class="value">
+            {{totalTransactions}}
+        </p>
+    </div>
+</section>
+
+<ng-container 
+class="flex items-center mt-[50px]  w-full justify-center" 
+*ngIf="loading">
+<div class="flex items-center w-full justify-center">
+    <mat-spinner color="secondary"></mat-spinner>
+</div>
+</ng-container>

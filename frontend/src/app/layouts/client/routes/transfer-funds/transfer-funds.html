@@ -1,0 +1,22 @@
+ <section>
+      <div class="form-box">
+          <label for="">Amount to Transfer</label>
+          <input type="number" [(ngModel)]="amount">
+        </div>
+
+ <mat-form-field appearance="fill" class="w-[300px]">
+          <mat-label>Transfer to</mat-label>
+
+          <mat-select [(value)]="selectedUserToTransferToId">
+            <mat-option *ngIf="loadingUsers" disabled>
+              Loading users...
+            </mat-option>
+            <mat-option *ngIf="!loadingUsers && users.length === 0" disabled>
+              No users available
+            </mat-option>
+            <mat-option *ngFor="let u of users" [value]="u._id">
+              {{ u.fullName }} ({{ u.email }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+ </section>

@@ -9,173 +9,162 @@ const { userModel } = require("../models/UserModel");
 const { withdrawalModel } = require("../models/withdrawalModel");
 
 exports.transferFunds = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    const session = await mongoose.startSession();
+  try {
+    const { from_account, to_account, amount, idempotency_key } = req.body;
 
-    session.startTransaction()
-
-    try {
-        const {
-            from_account, to_account, amount, idempotency_key
-        } = req.body
-
-        if (!from_account || !to_account || !amount || !idempotency_key) {
-            return res.status(400).json({ message: "All fields are required" })
-        }
-        //Check 1:No transfer to same account
-        if (from_account === to_account) {
-            return res.status(400).json({ message: "Cannot transfer funds to the same account" })
-        }
-        //Check 2:Checking idempotency
-        const existingKey = await idempotencyKeyModel.findOne({ key: idempotency_key });
-        if (existingKey) {
-            return res.status(409).json({ message: "Duplicate transfer request" })
-        }
-
-        const sender = await accountModel.findById(from_account);
-        const recepient = await accountModel.findById(to_account);
-
-        if (!sender || !recepient) {
-            res.status(404).json({ message: "Sender or recepient account not found" });
-        }
-
-        //Check 3:Check sender balance last ledger
-
-        const lastSenderLedger = await ledgerEntryModel
-            .find({ accountId: from_account })
-            .sort({ created_at: -1 })
-            .limit(1);
-
-        const senderBalance = lastSenderLedger.length ? lastSenderLedger[0].balanceAfter : 0;
-
-        if (amount > senderBalance) {
-            return res.status(400).json({ message: "Insufficient funds in account" })
-        }
-        const timeStamp = getTimestamp();
-
-        //Create transaction
-
-        const transaction = new transactionModel([{
-            type: "transfer",
-            fromAccount: from_account,
-            toAccount: to_account,
-            amount,
-            timeStamp
-        }],session)
-
-        await transaction.save();
-
-        //debit ledger entry
-        const debitLedger = new ledgerEntryModel([{
-            transactionId: transaction._id,
-            accountId: from_account,
-            entryType: "debit",
-            amount,
-            balanceAfter: senderBalance - amount,
-            timeStamp
-        }],{session});
-
-        //get recepient last balance
-        const lastRecepientLedger = await ledgerEntryModel
-            .find({ accountId: to_account })
-            .sort({ created_at: -1 })
-            .limit(1);
-
-        const recepientBalance = lastRecepientLedger.length ? lastRecepientLedger[0].balanceAfter : 0;
-
-        //credit entry ledger
-        const creditLedger = new ledgerEntryModel([{
-            accountId: to_account,
-            transactionId: transaction._id,
-            entryType: "credit",
-            amount,
-            balanceAfter: recepientBalance + amount,
-            timeStamp
-        }],{session});
-
-        await debitLedger.save();
-        await creditLedger.save();
-
-        sender.balance = senderBalance - amount;
-        recepient.balance = recepientBalance + amount;
-
-        await sender.save();
-        await recepient.save();
-
-        //save idempotency key
-        const keyEntry = new idempotencyKeyModel([{
-            key: idempotency_key,
-            userId: from_account,
-            transactionId: transaction._id,
-            timeStamp
-        }],{session});
-
-        await keyEntry.save();
-
-        //Log in audit
-        const auditLog = new auditLogModel([{
-            actorId: from_account,
-            action: "TRANSFER_FUNDS",
-            transactionId: transaction._id,
-            timeStamp
-        }],{session})
-
-        await auditLog.save();
-
-        await session.commitTransaction();
-        session.endSession();
-
-        return res.status(201).json({
-            message: "Transfer successful",
-            transaction,
-            debitLedger,
-            creditLedger
-        })
-
-
-    } catch (error) {
-        console.log("Transfer error", error);
-        await session.abortTransaction();
-        session.endSession();
-
-        return res.status(500).json({ message: "internal server error" })
+    if (!from_account || !to_account || !amount || !idempotency_key) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-}
+
+    if (from_account === to_account) {
+      return res.status(400).json({ message: "Cannot transfer funds to the same account" });
+    }
+
+    // Check idempotency
+    const existingKey = await idempotencyKeyModel.findOne({ key: idempotency_key });
+    if (existingKey) {
+      return res.status(409).json({ message: "Duplicate transfer request" });
+    }
+
+    const sender = await accountModel.findById(from_account).session(session);
+    const recepient = await accountModel.findById(to_account).session(session);
+
+    if (!sender || !recepient) {
+      return res.status(404).json({ message: "Sender or recepient account not found" });
+    }
+
+    // Check sender balance
+    const lastSenderLedger = await ledgerEntryModel
+      .find({ accountId: from_account })
+      .sort({ created_at: -1 })
+      .limit(1)
+      .session(session);
+
+    const senderBalance = lastSenderLedger.length ? lastSenderLedger[0].balanceAfter : 0;
+    if (amount > senderBalance) {
+      return res.status(400).json({ message: "Insufficient funds in account" });
+    }
+
+    const timeStamp = getTimestamp();
+
+    // Create transaction
+    const transaction = await transactionModel.create([{
+      type: "transfer",
+      fromAccount: from_account,
+      toAccount: to_account,
+      amount,
+      timeStamp
+    }], { session });
+
+    // Debit ledger
+    const debitLedger = await ledgerEntryModel.create([{
+      transactionId: transaction[0]._id,
+      accountId: from_account,
+      entryType: "debit",
+      amount,
+      balanceAfter: senderBalance - amount,
+      timeStamp
+    }], { session });
+
+    // Credit ledger
+    const lastRecepientLedger = await ledgerEntryModel
+      .find({ accountId: to_account })
+      .sort({ created_at: -1 })
+      .limit(1)
+      .session(session);
+
+    const recepientBalance = lastRecepientLedger.length ? lastRecepientLedger[0].balanceAfter : 0;
+
+    const creditLedger = await ledgerEntryModel.create([{
+      transactionId: transaction[0]._id,
+      accountId: to_account,
+      entryType: "credit",
+      amount,
+      balanceAfter: recepientBalance + amount,
+      timeStamp
+    }], { session });
+
+    // Update balances
+    sender.balance = senderBalance - amount;
+    recepient.balance = recepientBalance + amount;
+
+    await sender.save({ session });
+    await recepient.save({ session });
+
+    // Save idempotency key
+    await idempotencyKeyModel.create([{
+      key: idempotency_key,
+      userId: from_account,
+      transactionId: transaction[0]._id,
+      timeStamp
+    }], { session });
+
+    // Log audit
+    await auditLogModel.create([{
+      actorId: from_account,
+      action: "TRANSFER_FUNDS",
+      transactionId: transaction[0]._id,
+      timeStamp
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(201).json({
+      message: "Transfer successful",
+      transaction: transaction[0],
+      debitLedger: debitLedger[0],
+      creditLedger: creditLedger[0]
+    });
+
+  } catch (error) {
+    console.error("Transfer error", error);
+    await session.abortTransaction();
+    session.endSession();
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 
 exports.withdrawFromAccount = async (req, res) => {
     const session = await mongoose.startSession();
 
-    session.startTransaction()
     try {
+        session.startTransaction();
+
         const { userId, amount } = req.body;
 
         if (!userId || !amount) {
             return res.status(400).json({ message: "UserId and amount are required" });
         }
 
-        const account = await accountModel.findOne({ userId: userId });
+        const account = await accountModel.findOne({ userId }).session(session);
 
         if (!account) {
             return res.status(404).json({ message: "Account not found" });
         }
-        //if insufficient balance
+
         if (account.balance < amount) {
-            await transactionModel.create([{
+            // Failed transaction
+            const failedTransaction = await transactionModel.create([{
                 accountId: account._id,
                 amount,
                 type: "withdrawal",
                 status: "failed",
                 timeStamp: getTimestamp(),
-            }],{session});
+            }], { session });
 
             await withdrawalModel.create([{
-                transactionId: failedTransaction._id,
+                transactionId: failedTransaction[0]._id,
                 accountId: account._id,
                 amount,
                 status: "failed",
                 timeStamp: getTimestamp()
-            }],{session});
+            }], { session });
 
             await auditLogModel.create([{
                 action: "withdrawal_failed",
@@ -183,46 +172,45 @@ exports.withdrawFromAccount = async (req, res) => {
                 amount,
                 timeStamp: getTimestamp()
             }], { session });
+
+            await session.commitTransaction();
+            session.endSession();
+
             return res.status(400).json({ message: "Insufficient funds in account" });
         }
+
+        // Successful transaction
         const transaction = await transactionModel.create([{
-            account: account._id,
+            accountId: account._id,
             amount,
             type: "withdrawal",
+            status: "allocated",
             timeStamp: getTimestamp()
-        }],
-        { session })
+        }], { session });
 
-        //create a withdrawal entry
-        await withdrawalModel.create(
-            [{
-                transactionId: transaction[0]._id,
-                accountId: account._id,
-                amount,
-                status: "allocated",
-                timeStamp: getTimestamp()
-            }],
-            { session }
-        );
+        await withdrawalModel.create([{
+            transactionId: transaction[0]._id,
+            accountId: account._id,
+            amount,
+            status: "allocated",
+            timeStamp: getTimestamp()
+        }], { session });
 
         await auditLogModel.create([{
-            action: "withdrawal_successfully",
+            action: "withdrawal_successful",
             actorId: userId,
             amount,
             timeStamp: getTimestamp()
         }], { session });
 
+        // Update account using session
         account.balance -= amount;
-        await account.save();
-
+        await account.save({ session });
 
         await session.commitTransaction();
         session.endSession();
 
-        return res.status(201).json({
-            message: "Withdrawal successfullly",
-        })
-
+        return res.status(201).json({ message: "Withdrawal successful" });
 
     } catch (error) {
         console.error("WITHDRAW ERROR:", error);
@@ -231,45 +219,84 @@ exports.withdrawFromAccount = async (req, res) => {
 
         return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
+
 
 exports.depositFunds = async (req, res) => {
-    try {
-        const { userId, amount } = req.body;
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-        if (!userId || !amount) {
-            return res.status(400).json({ message: "UserId and amount are required" });
-        }
+  try {
+    const timeStamp = getTimestamp();
+    const { userId, amount } = req.body;
 
-        const account = await accountModel.findOne({ userId: userId });
-
-        if (!account) {
-            return res.status(404).json({ message: "Account not found" });
-        }
-
-        await transactionModel.create({
-            accountId: account._id,
-            amount,
-            type: "deposit",
-            status: "allocated",
-            timeStamp: getTimestamp(),
-        });
-        await auditLogModel.create({
-            action: "deposit_of_funds",
-            actorId: userId,
-            amount,
-            timeStamp: getTimestamp()
-        });
-
-        account.balance += amount;
-        await account.save();
-
-        return res.status(201).json({
-            message: "Funds deposited successfully"
-        })
-
-    } catch (error) {
-        console.error("Deposit ERROR:", error);
-        return res.status(500).json({ message: "Internal server error" });
+    if (!userId || !amount) {
+      return res.status(400).json({ message: "UserId and amount are required" });
     }
+
+    const depositAmount = Number(amount);
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
+    }
+
+    const account = await accountModel.findOne({ userId: userId }).session(session);
+    //console.log("My account", account);
+
+    if (!account) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    // Create transaction
+    const transaction = await transactionModel.create([{
+      accountId: account._id,
+      amount: depositAmount,
+      type: "deposit",
+      status: "allocated",
+      timeStamp
+    }], { session });
+
+    // Create audit log
+    const audit = await auditLogModel.create([{
+      action: "deposit_of_funds",
+      actorId: userId,
+      amount: depositAmount,
+      timeStamp
+    }], { session });
+
+    // Update account balance
+    account.balance += depositAmount;
+    await account.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    //console.log("Transaction:", transaction);
+    //console.log("Audit:", audit);
+
+    return res.status(201).json({
+      message: "Funds deposited successfully",
+      transaction,
+      audit
+    });
+
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Deposit ERROR:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }}
+
+exports.transactions = async (req, res) => {
+    try {
+        const transactions = await transactionModel.find({});
+
+        return res.status(200).json({
+            message: "Available transactions",
+            transactions
+        })
+    } catch (error) {
+        return res.status(500).json({ message: "Internal server error", error });
+    }
+
 }

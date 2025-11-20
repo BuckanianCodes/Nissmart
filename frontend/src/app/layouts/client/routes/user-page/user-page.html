@@ -1,0 +1,68 @@
+<section *ngIf="!loading" class="mt-[50px] flex items-center flex-col gap-8 justify-center w-full">
+  <button (click)="back()" class="absolute top-0 left-0 mt-16 ml-16 border w-12 rounded-full text-3xl font-bold h-12">
+    < </button>
+      <h1 class="text-lg">Welcome
+        <span class="text-green-700">
+          {{ (user$ | async)?.user }}
+        </span>
+      </h1>
+      <div class="balance card">
+        <h2>Account balance</h2>
+        {{ (user$ | async)?.account?.balance }}
+      </div>
+      <div class="flex items-center flex-col justify-center gap-4">
+        <p class="font-semibold w-max border-b-4 tracking-wider">Actions</p>
+        <div class="flex flex-wrap items-center gap-6">
+          <button class="action" (click)="toggleNav('deposit')">Deposit</button>
+
+          <button class="action" 
+          (click)="redirectToTransferPage()">Transfer</button>
+
+          <button class="action" (click)="toggleNav('withdrawal')">Withdraw</button>
+        </div>
+      </div>
+</section>
+
+<mat-drawer #drawer mode="over" class="fullscreen-drawer w-full flex justify-center"
+  (openedChange)="onDrawerToggled($event)">
+  <button (click)="toggleCloseNav()"
+    class="bg-[#22c55e] cursor-pointer py-2 absolute right-0 mt-8 mr-8 px-4 top-0 rounded-lg">close
+    <span>x</span></button>
+
+  <div *ngIf=" (user$ | async)?.account?.userId as user">
+
+    <div *ngIf="selectedAction === 'deposit'">
+      <div
+        class="flex items-center p-6 gap-6 md:w-[500px] min-h-[500px] border border-yellow-500 rounded-lg justify-center flex-col mt-[70px]">
+        <div class="form-box">
+          <label for="">Amount to deposit</label>
+          <input type="number" [(ngModel)]="amount">
+        </div>
+        <button class="save-btn" (click)="deposit(user)" [disabled]="loading">Deposit </button>
+      </div>
+    </div>
+
+
+    <div *ngIf="selectedAction === 'withdrawal'">
+      <div
+        class="flex items-center p-6 gap-6 md:w-[500px] min-h-[500px] border border-yellow-500 rounded-lg justify-center flex-col mt-[70px]">
+        <div class="form-box">
+          <label for="">Amount to withdraw</label>
+          <input type="number" [(ngModel)]="amount">
+        </div>
+        <button class="save-btn" (click)="withdraw(user)" [disabled]="loading">Withdraw</button>
+      </div>
+    </div>
+
+  </div>
+
+</mat-drawer>
+
+
+  
+
+<ng-container class="flex items-center mt-[50px]  w-full justify-center" *ngIf="loading">
+  <div class="flex items-center w-full justify-center">
+    <mat-spinner color="secondary"></mat-spinner>
+  </div>
+</ng-container>

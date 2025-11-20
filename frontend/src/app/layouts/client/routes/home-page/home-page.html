@@ -1,0 +1,61 @@
+<section class="mt-[70px] flex w-full items-center justify-center gap-4">
+  <button 
+  routerLink="/admin"
+  class="absolute top-0 font-semibold left-0 mt-6 ml-12 border py-1 px-2 rounded">
+    <span><</span>
+    Go to Admin
+  </button>
+  <div class="user-actions box ">
+    <mat-form-field appearance="fill" class="w-[300px]">
+      <mat-label>Select User</mat-label>
+
+      <mat-select [(value)]="selectedUserId">
+
+        <mat-option *ngFor="let u of users" (click)="redirectToUserPage(u._id)" [value]="u._id">
+          {{ u.fullName }} ({{ u.email }})
+        </mat-option>
+
+      </mat-select>
+    </mat-form-field>
+    <button (click)="toggleNav()" class="create-user-btn">
+      create User
+    </button>
+  </div>
+  <!-- <div class="box">
+        <button>View Balance</button>
+    </div>
+     <div class="box">
+        <button>Make a deposit</button>
+    </div>
+      <div class="box">
+        <button>Internal Transfers</button>
+    </div>
+      <div class="box">
+        <button>Make a withdrwal</button>
+    </div>
+    <div class="box">
+        <button>Make transaction history</button>
+    </div> -->
+</section>
+
+<mat-drawer #drawer mode="over" class="fullscreen-drawer w-full flex justify-center"
+  (openedChange)="onDrawerToggled($event)">
+  <button (click)="toggleCloseNav()"
+    class="bg-[#22c55e] cursor-pointer py-2 absolute right-0 mt-8 mr-8 px-4 top-0 rounded-lg">close
+    <span>x</span></button>
+
+  <form [formGroup]="createUserForm" (ngSubmit)="createUser()"
+    class="flex items-center p-6 gap-6 md:w-[500px] min-h-[500px] border border-yellow-500 rounded-lg justify-center flex-col mt-[70px]">
+    <div class="form-box">
+      <label>Full Name</label>
+      <input type="text" formControlName="fullName" placeholder="">
+    </div>
+    <div class="form-box">
+      <label>Email</label>
+      <input type="text" formControlName="email" placeholder="">
+    </div>
+    <button type="submit" class="save-btn" [disabled]="submitted || createUserForm.invalid">
+      Save
+    </button>
+  </form>
+</mat-drawer>
