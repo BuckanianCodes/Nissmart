@@ -1,4 +1,7 @@
-#Running the Frontend
+After cloning the repository
+
+
+# Running the Frontend
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.1.
 
@@ -42,3 +45,33 @@ ng build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+
+# Running the Backend
+
+This project was generated using Express.js, MongoDB as the database and mongoose ase the ORM.
+
+
+
+## Cd to the frontend app
+
+cd backend
+
+## Install dependencies
+npm install
+
+## Development server
+
+To start a local development server, run:
+
+```bash
+npm run dev
+```
+
+
+Once the server is running, open your browser and navigate to `http://localhost:3000/`. The application will automatically reload whenever you modify any of the source files.
+
+
+
+
+
