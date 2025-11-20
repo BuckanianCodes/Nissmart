@@ -1,6 +1,13 @@
-# Frontend
+#Running the Frontend
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.1.
+
+## Cd to the frontend app
+cd frontend
+
+## Install dependencies
+npm install
+
 
 ## Development server
 
