@@ -15,9 +15,9 @@
         <div class="flex flex-wrap items-center gap-6">
           <button class="action" (click)="toggleNav('deposit')">Deposit</button>
 
-          <button class="action" 
-          (click)="redirectToTransferPage()">Transfer</button>
-
+          <button class="action" [routerLink]="['/transfer', (user$ | async)?.account?.userId]">
+            Transfer
+          </button>
           <button class="action" (click)="toggleNav('withdrawal')">Withdraw</button>
         </div>
       </div>
@@ -59,7 +59,7 @@
 </mat-drawer>
 
 
-  
+
 
 <ng-container class="flex items-center mt-[50px]  w-full justify-center" *ngIf="loading">
   <div class="flex items-center w-full justify-center">

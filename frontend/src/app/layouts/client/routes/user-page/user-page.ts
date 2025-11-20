@@ -53,9 +53,14 @@ export class UserPage implements OnInit {
     this.drawer.open();
   }
 
-  redirectToTransferPage(){
-  this.router.navigateByUrl(`/transfer/${this.userId}`)
-  }
+  //  redirectToTransferPage() {
+  //   const userId = (this.user$ | async)?.account?.userId; 
+  //   // OR get it from a local property if already available
+
+  //   if (userId) {
+  //     this.router.navigate([`/transfer/${userId}`]);
+  //   }
+  // }
 
 
   back() {

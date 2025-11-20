@@ -1,4 +1,11 @@
- <section>
+ <section class="mt-[50px] flex items-center flex-col gap-8 justify-center w-full">
+
+  <div class="max-w-[500px] flex items-center justify-center gap-4 flex-col">
+    <h1 
+    class="text-xl uppercase font-semibold tracking-wider"
+    >
+      Transfer Funds
+    </h1>
       <div class="form-box">
           <label for="">Amount to Transfer</label>
           <input type="number" [(ngModel)]="amount">
@@ -8,10 +15,10 @@
           <mat-label>Transfer to</mat-label>
 
           <mat-select [(value)]="selectedUserToTransferToId">
-            <mat-option *ngIf="loadingUsers" disabled>
+            <mat-option *ngIf="loading" disabled>
               Loading users...
             </mat-option>
-            <mat-option *ngIf="!loadingUsers && users.length === 0" disabled>
+            <mat-option *ngIf="!loading && users.length === 0" disabled>
               No users available
             </mat-option>
             <mat-option *ngFor="let u of users" [value]="u._id">
@@ -19,4 +26,11 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <button
+        (click)="transfer()"
+         class="save-btn">
+          transfer
+        </button>
+            
+  </div>
  </section>
